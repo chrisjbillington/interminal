@@ -79,6 +79,8 @@ is concerned, you *did* type it in. In this way, `interminal` can respect
 whatever crazy hacks you have decided to apply to your shell — by just typing
 things into a terminal the same as a human would.
 
+![alt tag](screenshot.png)
+
 If you have something more complex, you can instead do:
 
 ```
