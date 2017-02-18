@@ -21,7 +21,7 @@ $ python3 setup.py install
 
 `interminal` is mostly useful for things like making an external tool for your
 text editor, or making a launcher for a terminal program, or things like that.
-For example, You might want to run the command `python3 my_script.py` whenever
+For example, you might want to run the command `python3 my_script.py` whenever
 you press a certain keyboard shortcut in your text editor whilst you've got
 the file `my_script.py` open. It's easy to make an extension to do this in,
 for example, Sublime Text 3, but the output will be shown in a panel at the
@@ -38,7 +38,7 @@ Unfortunately it's not that simple. The following command:
 $ gnome-terminal -x python3 my_script.py
 ```
 
-Has a few problems. One, it closes the terminal as soon as the command exits,
+has a few problems. One, it closes the terminal as soon as the command exits,
 preventing you from seeing its output. Secondly, the script is not run from
 within a shell, meaning any environment variables you've set in your `.bashrc'
 or similar may not be available. If you want your commands to be run in a
