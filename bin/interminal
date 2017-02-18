@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+
+# Which terminal? Guess based on desktop environment:
+DESKTOP = os.environ['XDG_CURRENT_DESKTOP'].lower()
+
+if DESKTOP in ['gnome', 'unity']:
+    TERMINAL = ['gnome-terminal', '-x']
+elif DESKTOP == 'kde':
+    TERMINAL = ['konsole', '-e']
+elif DESKTOP == 'xfce':
+    TERMINAL = ['xfce4-terminal', '-x']
+else:
+    TERMINAL = ['xterm', '-e']
+
+# Replace this process with a terminal emulator, with command line arguments
+# to run 'inshell' (the other script provided by this package) with the user's
+# command:
+sys.argv[0] = 'inshell'
+os.execvp(TERMINAL[0], TERMINAL + sys.argv)

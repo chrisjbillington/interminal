@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import pty
+import tty
+import pipes
+
+STDIN = 0
+STDOUT = 1
+SHELL = os.getenv('SHELL')
+
+if len(sys.argv) > 1:
+    if sys.argv[1] == '--script':
+        # The command is provided as a single, already quoted  argument to be
+        # entered into the shell as-is:
+        if len(sys.argv) > 2:
+            command = sys.argv[2]
+        else:
+            command = ''
+    else:
+        # We have the unquoted arguments - quote them as neccesary before entering
+        # them into a shell:
+        command = ' '.join(pipes.quote(s) for s in sys.argv[1:])
+else:
+    # There was no command provided
+    command = ''
+
+command = command.encode('utf8')
+if command and not command.endswith(b'\n'):
+    command += b'\n'
+
+
+# launch a shell and inject the user's command into it. This is done with a
+# pseudo-tty, so that the shell does everything it would if the user typed the
+# command themselves
+
+# Fork and launch a shell attached to a pseudo-tty:
+pid, master_fd = pty.fork()
+if pid == 0:
+    # Child process becomes the shell:
+    os.execlp(SHELL, SHELL, '-i')
+
+# Change stdin to raw mode, storing the current mode so we can restore it
+# later:
+mode = tty.tcgetattr(STDIN)
+tty.setraw(STDIN)
+
+# Give the shell a chance to display its prompt before writing the
+# command:
+data = os.read(master_fd, 1024)
+os.write(STDOUT, data)
+
+# Write the command to the shell's terminal:
+pty._writen(master_fd, command)
+
+# Copy streams to each other thereafter:
+try:
+    pty._copy(master_fd)
+except OSError:
+    # Restore mode of stdin:
+    tty.tcsetattr(0, tty.TCSAFLUSH, mode)
