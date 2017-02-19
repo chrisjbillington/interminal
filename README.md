@@ -19,13 +19,13 @@ compatible with Windows.
 to install `interminal`, run:
 
 ```
-$ pip3 install interminal
+$ sudo pip3 install interminal
 ```
 
 or to install from source:
 
 ```
-$ python3 setup.py install
+$ sudo python3 setup.py install
 ```
 
 ## Introduction
@@ -180,7 +180,7 @@ what the arguments are, you should try to quote them programatically to ensure
 you get the quoting right:
 
 ```python
-import pipes
+import shlex
 import os
 
 
@@ -191,7 +191,7 @@ args = ["interminal", "--script", "echo $PATH > 'my file with spaces'"]
 # args = ["interminal", "python3", "/path/to/my script with spaces.py"]
 
 # Create a single, appropriately quoted command from the arguments:
-command = ' '.join(pipes.quote(arg) for arg in args)
+command = ' '.join(shlex.quote(arg) for arg in args)
 
 # Then pass the single command to whatever shell will interpret it:
 os.system(command)

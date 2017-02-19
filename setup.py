@@ -1,6 +1,11 @@
 from distutils.core import setup
+import sys
 
-VERSION = '0.2.2'
+if sys.version_info < (3, 0):
+    raise Exception('Python >= 3 required')
+
+VERSION = '0.2.3'
+
 
 setup(name='interminal',
       version=VERSION,

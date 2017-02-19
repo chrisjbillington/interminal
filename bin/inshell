@@ -4,11 +4,22 @@ import sys
 import os
 import pty
 import tty
-import pipes
 
 STDIN = 0
 STDOUT = 1
 SHELL = os.getenv('SHELL')
+
+
+def shellquote(s):
+    """reimplementation of shlex.quote that doesn't quote non-ascii chars
+    (which there is no reason to do)"""
+    if not s:
+        return "''"
+    import re
+    if re.compile(r'[^\w@%+=:,./-]').search(s) is None:
+        return s
+    return "'" + s.replace("'", "'\"'\"'") + "'"
+
 
 if len(sys.argv) > 1:
     if sys.argv[1] == '--script':
@@ -21,7 +32,7 @@ if len(sys.argv) > 1:
     else:
         # We have the unquoted arguments - quote them as neccesary before entering
         # them into a shell:
-        command = ' '.join(pipes.quote(s) for s in sys.argv[1:])
+        command = ' '.join(shellquote(s) for s in sys.argv[1:])
 else:
     # There was no command provided
     command = ''
