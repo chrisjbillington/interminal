@@ -238,12 +238,15 @@ class PythonInterminalCommand(WindowCommand):
 ```
 
 And then it requires an addition to the keybindings file:
-```json
+```
 [
 
-    // ...
+    ...
 
     { "keys": ["f5"], "command": "python_interminal" },
+
+    ...
+
 ]
 ```
 
