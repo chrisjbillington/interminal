@@ -26,7 +26,7 @@ else:
     # There was no command provided
     command = ''
 
-command = command.encode('utf8')
+command = os.fsencode(command)
 if command and not command.endswith(b'\n'):
     command += b'\n'
 

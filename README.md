@@ -1,7 +1,18 @@
 # interminal
 
-`interminal` is a utility for running commands in an interactive shell session
-in a graphical terminal emulator. It is for Linux only.
+`interminal` is a utility for launching a graphical terminal emulator and
+running a command. It has the same behaviour as if you had opened the terminal
+and typed the command yourself, including history, respecting shell aliases
+etc. It is tested on Linux, possibly could work on macOS, and is not
+compatible with Windows.
+
+
+  * [Installation](#installation)
+  * [Introduction](#introduction)
+  * [Usage](#usage)
+  * [Notes](#notes)
+  * [Sublime extension example](#sublime-extension-example)
+
 
 ## Installation
 
@@ -39,12 +50,13 @@ $ gnome-terminal -x python3 my_script.py
 ```
 
 has a few problems. One, it closes the terminal as soon as the command exits,
-preventing you from seeing its output. Secondly, the script is not run from
-within a shell, meaning any environment variables you've set in your `.bashrc`
-or similar may not be available. If you want your commands to be run in a
-'normal' environment, you need to run a shell in the terminal first, and tell
-the shell to run your command. Then you have to start another shell to ensure
-the terminal emulator stays open:
+preventing you from seeing its output. Secondly, the script is not necessarily
+run from within a shell (whether or not it does seems to vary by terminal
+emulator and the current phase of the moon), meaning any environment variables
+you've set in your `.bashrc` or aliases etc may not be available. If you want
+your commands to be run in a 'normal' environment, you need to run a shell in
+the terminal first, and tell the shell to run your command. Then you have to
+start another shell to ensure the terminal emulator stays open:
 
 ```
 $ gnome-terminal -x bash -c "python3 my_script.py; bash"
@@ -154,6 +166,15 @@ subprocess.Popen(["interminal", "--script", "echo $PATH > 'my file with spaces'"
 In fact, you can have an arbitrarily long multi-line shell script as that
 final argument, it will be executed as-is.
 
+The following is fine too, for the case where you are not using any features
+of the shell and just want to run a single command:
+
+```python
+import subprocess
+subprocess.Popen(["interminal", "python3", "/path/to/my script with spaces.py"])
+```
+No quoting is neccesary at all in this case.
+
 But if you have to pass something to a shell, and you don't know in advance
 what the arguments are, you should try to quote them programatically to ensure
 you get the quoting right:
@@ -162,10 +183,80 @@ you get the quoting right:
 import pipes
 import os
 
-# This works too, if you can't avoid having to go through a shell:
+
+# If you have a command using shell features:
 args = ["interminal", "--script", "echo $PATH > 'my file with spaces'"]
+
+# or, when not using shell features:
+# args = ["interminal", "python3", "/path/to/my script with spaces.py"]
+
+# Create a single, appropriately quoted command from the arguments:
 command = ' '.join(pipes.quote(arg) for arg in args)
 
 # Then pass the single command to whatever shell will interpret it:
 os.system(command)
 ```
+
+## Sublime extension example
+
+Here's how I use `interminal` to make Sublime Text 3 run Python. This requires
+an extension file to be placed in `~/.config/sublime-text-3/Packages/User/`:
+
+```python
+
+# ~/.config/sublime-text-3/Packages/User/python_interminal.py
+
+import os
+import subprocess
+import sublime_plugin
+
+
+class WindowCommand(sublime_plugin.WindowCommand):
+
+    @property
+    def current_file(self):
+        return os.path.abspath(self.window.active_view().file_name())
+
+    @property
+    def current_file_basename(self):
+        return os.path.basename(self.current_file)
+
+    @property
+    def current_folder(self):
+        return os.path.dirname(self.current_file)
+
+    def save(self):
+        self.window.active_view().run_command('save')
+
+
+class PythonInterminalCommand(WindowCommand):
+    def run(self, index=None):
+        self.save()
+        subprocess.Popen(['interminal', 'python3', '-i', self.current_file_basename],
+                         cwd=self.current_folder)
+
+```
+
+And then it requires an addition to the keybindings file:
+```json
+[
+    ...
+
+    { "keys": ["f5"], "command": "python_interminal" },
+
+    ...
+]
+```
+
+I prefer `python3 -i` but you can of course modify this to whatever you like.
+
+In particular, running commands through an actual shell is useful for me
+because I have an alias such that `python3` actually calls
+`~/anaconda3/bin/python`, a newer version of Python than my system Python. If
+I change the alias, I won't have to change my Sublime extension - I only have
+to make sure my shell does what I want, and then anything launched via
+`interminal` will respect that.
+
+Note that it doesn't matter what the extension file is called, the keybinding
+finds the right command to run based on a naming convention for the class:
+`foo_bar_baz` means it will look for a class called `FooBarBazCommand`.
