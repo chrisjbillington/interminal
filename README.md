@@ -250,15 +250,20 @@ And then it requires an addition to the keybindings file:
 ]
 ```
 
-I prefer `python3 -i` but you can of course modify this to whatever you like.
+Then when you press `F5`:
 
-In particular, running commands through an actual shell is useful for me
-because I have an alias such that `python3` actually calls
-`~/anaconda3/bin/python`, a newer version of Python than my system Python. If
-I change the alias, I won't have to change my Sublime extension - I only have
-to make sure my shell does what I want, and then anything launched via
-`interminal` will respect that.
+![alt tag](screenshot_sublime.png)
+
 
 Note that it doesn't matter what the extension file is called, the keybinding
 finds the right command to run based on a naming convention for the class:
 `foo_bar_baz` means it will look for a class called `FooBarBazCommand`.
+
+I prefer `python3 -i` but you can of course modify this to whatever you like.
+
+In particular with this command, running commands through an actual shell is
+useful for because I have an alias such that `python3` actually calls
+`~/anaconda3/bin/python`, a newer version of Python than the system Python. If
+I change the alias, I won't have to change my Sublime extension - I only have
+to make sure the shell does what I want, and then anything launched via
+`interminal` will respect that.
