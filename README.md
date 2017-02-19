@@ -52,7 +52,7 @@ $ gnome-terminal -x bash -c "python3 my_script.py; bash"
 
 This is almost good enough. It doesn't add the command to your shell history,
 but it's basically what we want. But if you need to escape some characters in
-your command, you are two-layers deeo in "passing commands to other commands"
+your command, you are two-layers deep in "passing commands to other commands"
 — the quoting is going to get out of control fast. And for reasons I can't
 grasp, I can't get the above to work with some terminal emulators.
 
