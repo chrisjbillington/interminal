@@ -40,7 +40,7 @@ $ gnome-terminal -x python3 my_script.py
 
 has a few problems. One, it closes the terminal as soon as the command exits,
 preventing you from seeing its output. Secondly, the script is not run from
-within a shell, meaning any environment variables you've set in your `.bashrc'
+within a shell, meaning any environment variables you've set in your `.bashrc`
 or similar may not be available. If you want your commands to be run in a
 'normal' environment, you need to run a shell in the terminal first, and tell
 the shell to run your command. Then you have to start another shell to ensure
@@ -104,10 +104,10 @@ interminal like this, using the terminology terminal emulator as an example:
 $ terminology -e inshell --script 'du -hs $HOME/* | sort -hr; echo hello'
 ```
 
-interminal is actually just a very short script that replaces its own process
-with the terminal emulator running the `inshell` script, which also part of
-this package. So you can call `inshell` yourself as above to control which
-terminal to launch. If this sounds like it defeats the purpose of this
+`interminal` is actually just a very short script that replaces its own
+process with the terminal emulator running the `inshell` script, which is also
+part of this package. So you can call `inshell` yourself as above to control
+which terminal to launch. If this sounds like it defeats the purpose of this
 project, it doesn't — inserting the command into a shell that otherwise
 behaves like an ordinary interactive shell is the tricky bit.
 
@@ -123,7 +123,7 @@ $ interminal echo $PATH
 
 then `$PATH` will be expanded *prior* to `interminal` being called. This might
 be undesirable if, for example, the shell you are running `interminal` from is
-`/bin/sh`, and your `$SHELL` environment variable (which is what `interminal`
+dash, and your `$SHELL` environment variable (which is what `interminal`
 will run) is /bin/bash. The current shell won't have run your `.bashrc` and so
 might not have any additions you have made there to your `$PATH` variable. So
 as a general rule, in these cases you should do:
@@ -151,8 +151,8 @@ import subprocess
 subprocess.Popen(["interminal", "--script", "echo $PATH > 'my file with spaces'"])
 ```
 
-In fact, you have an arbitrarily long multi-line shell script as that final
-argument, it will be executed as-is.
+In fact, you can have an arbitrarily long multi-line shell script as that
+final argument, it will be executed as-is.
 
 But if you have to pass something to a shell, and you don't know in advance
 what the arguments are, you should try to quote them programatically to ensure
