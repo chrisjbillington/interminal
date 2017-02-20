@@ -4,21 +4,39 @@ import sys
 import os
 import pty
 import tty
+import re
 
 STDIN = 0
 STDOUT = 1
 SHELL = os.getenv('SHELL')
 
 
+# Contains characers that need to be quoted:
+needs_quoting = re.compile(r'[^\w@%+=:,./-]')
+
+# Contains control characters, or bytes that are invalid for the filesystem encoding:
+surrogates_and_control_chars = re.compile(r'[\udc80-\udcff]|[\u0000-\u001f]|\u007f')
+
+
+def escape_bytes(match):
+    return r'\x{0:02x}'.format(ord(os.fsencode(match.group())))
+
+
 def shellquote(s):
-    """reimplementation of shlex.quote that doesn't quote non-ascii chars
-    (which there is no reason to do)"""
-    if not s:
-        return "''"
-    import re
-    if re.compile(r'[^\w@%+=:,./-]').search(s) is None:
-        return s
-    return "'" + s.replace("'", "'\"'\"'") + "'"
+    quoted_substrings = []
+    # Split on single quotes. Do appropriate escaping of the pieces in between
+    # them, then join on escaped single quotes:
+    for substring in s.split("'"):
+        if surrogates_and_control_chars.search(substring):
+            # Escape any backslashes:
+            substring = substring.replace('\\', r'\\')
+            # Turn surrogate escapes and control characters into escape sequences for bytes:
+            substring = surrogates_and_control_chars.sub(escape_bytes, substring)
+            substring = "$'" + substring + "'"
+        elif needs_quoting.search(substring):
+            substring = "'" + substring + "'"
+        quoted_substrings.append(substring)
+    return "\"'\"".join(quoted_substrings)
 
 
 if len(sys.argv) > 1:
