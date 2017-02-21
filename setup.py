@@ -4,7 +4,7 @@ import sys
 if sys.version_info < (3, 0):
     raise Exception('Python >= 3 required')
 
-VERSION = '0.2.4'
+VERSION = '0.2.5'
 
 
 setup(name='interminal',

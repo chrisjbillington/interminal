@@ -15,8 +15,14 @@ elif DESKTOP == 'xfce':
 else:
     TERMINAL = ['xterm', '-e']
 
-# Replace this process with a terminal emulator, with command line arguments
-# to run 'inshell' (the other script provided by this package) with the user's
-# command:
-sys.argv[0] = 'inshell'
-os.execvp(TERMINAL[0], TERMINAL + sys.argv)
+
+def main():
+    # Replace this process with a terminal emulator, with command line arguments
+    # to run 'inshell' (the other script provided by this package) with the user's
+    # command:
+    sys.argv[0] = 'inshell'
+    os.execvp(TERMINAL[0], TERMINAL + sys.argv)
+
+
+if __name__ == '__main__':
+    main()

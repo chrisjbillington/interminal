@@ -11,81 +11,119 @@ STDOUT = 1
 SHELL = os.getenv('SHELL')
 
 
-# Contains characers that need to be quoted:
-needs_quoting = re.compile(r'[^\w@%+=:,./-]')
+def make_escape_codes():
+    """Make a dictionary containing escape codes for all bytes than need
+    escaping in a dollar-quoted string on the shell"""
+    escape_codes = {'\\': R'\\',
+                "'" : R"\'",
+                '\0': R'\0',
+                '\a': R'\a',
+                '\b': R'\b',
+                '\f': R'\f',
+                '\n': R'\n',
+                '\r': R'\r',
+                '\t': R'\t',
+                '\v': R'\v'}
+    # Add codes for all bytes that don't already have their own code.
+    # Control chars below byte 32:
+    for i in range(0, 32):
+        if chr(i) not in escape_codes:
+            escape_codes[chr(i)] = r'\x{0:02x}'.format(i)
+    # The delete char, byte 127:
+    escape_codes['\x7f'] = r'\x7f'
+    # bytes > 127:
+    for i in range(128, 256):
+        # Both surrogate escapes and normal bytes embedded in unicode strings:
+        escape_codes[chr(0xdc00 + i)] = escape_codes[chr(i)] = r'\x{0:02x}'.format(i)
+    return escape_codes
 
-# Contains control characters, or bytes that are invalid for the filesystem encoding:
-surrogates_and_control_chars = re.compile(r'[\udc80-\udcff]|[\u0000-\u001f]|\u007f')
+
+ESCAPE_CODES = make_escape_codes()
 
 
-def escape_bytes(match):
-    return r'\x{0:02x}'.format(ord(os.fsencode(match.group())))
+# Control characters, or bytes that are invalid for the filesystem encoding:
+dollar_quote_required = re.compile(r'[\u007f]|[\udc80-\udcff]|[\u0000-\u001f]')
+
+# Chars we will escape if dollar quotes are used
+dollar_quote_to_escape = re.compile(r'[\\\']|' + dollar_quote_required.pattern)
+
+# Characters that need to be quoted normally:
+normal_quote_required = re.compile(r'[^\w@%+=:,./-]')
 
 
-def shellquote(s):
-    quoted_substrings = []
-    # Split on single quotes. Do appropriate escaping of the pieces in between
-    # them, then join on escaped single quotes:
-    for substring in s.split("'"):
-        if surrogates_and_control_chars.search(substring):
-            # Escape any backslashes:
-            substring = substring.replace('\\', r'\\')
-            # Turn surrogate escapes and control characters into escape sequences for bytes:
-            substring = surrogates_and_control_chars.sub(escape_bytes, substring)
-            substring = "$'" + substring + "'"
-        elif needs_quoting.search(substring):
-            substring = "'" + substring + "'"
-        quoted_substrings.append(substring)
-    return "\"'\"".join(quoted_substrings)
+def shellquote(args):
+    """Escape a list of strings or bytestrings, making them appropraiate to
+    pass as a single command argument to a shell. Returns a string."""
+    quoted_args = []
+    for s in args:
+        if isinstance(s, bytes):
+            s = os.fsdecode(s)
+        if dollar_quote_required.search(s):
+            s = "$'" + dollar_quote_to_escape.sub(lambda m: ESCAPE_CODES[m.group()], s) + "'"
+        elif normal_quote_required.search(s):
+            s = "'" + s.replace("'", "'\"'\"'") + "'"
+        quoted_args.append(s)
+    return ' '.join(quoted_args)
 
 
-if len(sys.argv) > 1:
-    if sys.argv[1] == '--script':
+def get_command():
+    """Parse sys.argv to get the user's command"""
+    if len(sys.argv) > 2 and sys.argv[1] == '--script':
         # The command is provided as a single, already quoted  argument to be
         # entered into the shell as-is:
-        if len(sys.argv) > 2:
-            command = sys.argv[2]
-        else:
-            command = ''
+        command = sys.argv[2]
     else:
-        # We have the unquoted arguments - quote them as neccesary before entering
-        # them into a shell:
-        command = ' '.join(shellquote(s) for s in sys.argv[1:])
-else:
-    # There was no command provided
-    command = ''
+        # We have the unquoted arguments - quote them as neccesary before
+        # entering them into a shell:
+        command = shellquote(sys.argv[1:])
 
-command = os.fsencode(command)
-if command and not command.endswith(b'\n'):
-    command += b'\n'
+    command = os.fsencode(command)
+    if command and not command.endswith(b'\n'):
+        command += b'\n'
+
+    return command
 
 
-# launch a shell and inject the user's command into it. This is done with a
-# pseudo-tty, so that the shell does everything it would if the user typed the
-# command themselves
+def inject_command(command):
+    """launch a shell and inject the user's command into it. This is done with
+    a pseudo-tty, so that the shell does everything it would if the user typed
+    the command themselves"""
 
-# Fork and launch a shell attached to a pseudo-tty:
-pid, master_fd = pty.fork()
-if pid == 0:
-    # Child process becomes the shell:
-    os.execlp(SHELL, SHELL, '-i')
+    # Fork and launch a shell attached to a pseudo-tty:
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        # Child process becomes the shell:
+        os.execlp(SHELL, SHELL, '-i')
 
-# Change stdin to raw mode, storing the current mode so we can restore it
-# later:
-mode = tty.tcgetattr(STDIN)
-tty.setraw(STDIN)
+    # Change stdin to raw mode, storing the current mode so we can restore it
+    # later:
+    mode = tty.tcgetattr(STDIN)
+    tty.setraw(STDIN)
 
-# Give the shell a chance to display its prompt before writing the
-# command:
-data = os.read(master_fd, 1024)
-os.write(STDOUT, data)
+    # Give the shell a chance to display its prompt before writing the
+    # command:
+    data = os.read(master_fd, 1024)
+    os.write(STDOUT, data)
 
-# Write the command to the shell's terminal:
-pty._writen(master_fd, command)
+    # Write the command to the shell's terminal:
+    pty._writen(master_fd, command)
 
-# Copy streams to each other thereafter:
-try:
-    pty._copy(master_fd)
-except OSError:
-    # Restore mode of stdin:
-    tty.tcsetattr(0, tty.TCSAFLUSH, mode)
+    # Copy streams to each other thereafter:
+    try:
+        pty._copy(master_fd)
+    except OSError:
+        # Restore mode of stdin:
+        tty.tcsetattr(0, tty.TCSAFLUSH, mode)
+
+
+def main():
+    try:
+        command = get_command()
+    except Exception as err:
+        sys.stderr.write(str(sys.exc_info()))
+        command = ''
+    inject_command(command)
+
+
+if __name__ == '__main__':
+    main()
