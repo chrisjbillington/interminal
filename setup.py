@@ -4,7 +4,7 @@ import sys
 if sys.version_info < (3, 0):
     raise Exception('Python >= 3 required')
 
-VERSION = '0.2.5'
+VERSION = '0.3.0'
 
 
 setup(name='interminal',
@@ -14,4 +14,5 @@ setup(name='interminal',
       author_email='chrisjbillington@gmail.com',
       url='https://github.com/chrisjbillington/interminal',
       license="BSD",
-      scripts=['bin/interminal', 'bin/inshell'])
+      scripts=['bin/interminal', 'bin/inshell'],
+      install_requires=['pexpect'],)

@@ -78,52 +78,52 @@ def get_command():
         command = shellquote(sys.argv[1:])
 
     command = os.fsencode(command)
-    if command and not command.endswith(b'\n'):
-        command += b'\n'
-
     return command
 
 
 def inject_command(command):
     """launch a shell and inject the user's command into it. This is done with
-    a pseudo-tty, so that the shell does everything it would if the user typed
-    the command themselves"""
+    a pseudo-tty using pexpect, so that the shell does everything it would if
+    the user typed the command themselves"""
 
-    # Fork and launch a shell attached to a pseudo-tty:
-    pid, master_fd = pty.fork()
-    if pid == 0:
-        # Child process becomes the shell:
-        os.execlp(SHELL, SHELL, '-i')
+    import pexpect, struct, fcntl, termios, signal
 
-    # Change stdin to raw mode, storing the current mode so we can restore it
-    # later:
-    mode = tty.tcgetattr(STDIN)
-    tty.setraw(STDIN)
+    # pexpect does not forward sigwinch, so we have to do that ourselves:
+    def sigwinch_passthrough (sig, data):
+        s = struct.pack("HHHH", 0, 0, 0, 0)
+        a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ , s))
+        child.setwinsize(a[0],a[1])
 
-    # Give the shell a chance to display its prompt before writing the
-    # command:
-    data = os.read(master_fd, 1024)
-    os.write(STDOUT, data)
+    # Start the shell process:
+    child = pexpect.spawn(SHELL, ["-i"])
 
-    # Write the command to the shell's terminal:
-    pty._writen(master_fd, command)
+    # Connect SIGWINCH:
+    signal.signal(signal.SIGWINCH, sigwinch_passthrough)
 
-    # Copy streams to each other thereafter:
-    try:
-        pty._copy(master_fd)
-    except OSError:
-        # Restore mode of stdin:
-        tty.tcsetattr(0, tty.TCSAFLUSH, mode)
+    # Wait until the shell has output something, so that we don't input before
+    # the prompt:
+    # child.expect('.')
+
+    import time
+    time.sleep(.05)
+    # Inject the command, if any:
+    if command:
+        child.sendline(command)
+
+    # Pass control to the user:
+    child.interact(escape_character=None)
 
 
 def main():
     try:
         command = get_command()
-    except Exception as err:
-        sys.stderr.write(str(sys.exc_info()))
-        command = ''
-    inject_command(command)
-
-
+        inject_command(command)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        try:
+            input()
+        except:
+            pass
 if __name__ == '__main__':
     main()
