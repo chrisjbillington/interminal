@@ -4,13 +4,15 @@ import sys
 import os
 
 # Which terminal? Guess based on desktop environment:
-DESKTOP = os.environ['XDG_CURRENT_DESKTOP'].lower()
+desktop = os.environ.get('XDG_CURRENT_DESKTOP')
+if desktop is not None:
+    desktop = desktop.lower()
 
-if DESKTOP in ['gnome', 'unity']:
+if desktop in ['gnome', 'unity']:
     TERMINAL = ['gnome-terminal', '-x']
-elif DESKTOP == 'kde':
+elif desktop == 'kde':
     TERMINAL = ['konsole', '-e']
-elif DESKTOP == 'xfce':
+elif desktop == 'xfce':
     TERMINAL = ['xfce4-terminal', '-x']
 else:
     TERMINAL = ['xterm', '-e']

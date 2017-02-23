@@ -102,19 +102,16 @@ def run_command(command):
     if command:
         child.sendline(command)
 
-    # Pass control to the user:
+    # Pass control to the user until they quit:
     child.interact(escape_character=None)
-
-    # Return retcode:
-    pid, status = os.waitpid(child.pid, 0)
-    return status
+    child.close()
+    return child.exitstatus
 
 
 def main():
     try:
         command = get_command()
-        retcode = run_command(command)
-        sys.exit(retcode)
+        sys.exit(run_command(command))
     except Exception:
         import traceback
         traceback.print_exc()
