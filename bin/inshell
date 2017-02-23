@@ -13,15 +13,15 @@ def shellquote(args):
     #Make a dictionary containing escape codes for all bytes than need
     # escaping in a dollar-quoted string on the shell:
     ESCAPE_CODES = {'\\': R'\\',
-                "'" : R"\'",
-                '\0': R'\0',
-                '\a': R'\a',
-                '\b': R'\b',
-                '\f': R'\f',
-                '\n': R'\n',
-                '\r': R'\r',
-                '\t': R'\t',
-                '\v': R'\v'}
+                    "'" : R"\'",
+                    '\0': R'\0',
+                    '\a': R'\a',
+                    '\b': R'\b',
+                    '\f': R'\f',
+                    '\n': R'\n',
+                    '\r': R'\r',
+                    '\t': R'\t',
+                    '\v': R'\v'}
     # Add codes for all bytes that don't already have their own code.
     # Control chars below byte 32:
     for i in range(0, 32):
