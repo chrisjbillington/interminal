@@ -86,7 +86,7 @@ def run_command(command):
 
 
     # Start the shell process:
-    child = pexpect.spawn(os.getenv('SHELL'), ["-i"])
+    child = pexpect.spawn(os.getenv('SHELL'))
     child.delaybeforesend = 0
 
     # Connect SIGWINCH:
@@ -105,7 +105,10 @@ def run_command(command):
     # Pass control to the user until they quit:
     child.interact(escape_character=None)
     child.close()
-    return child.exitstatus
+    if child.exitstatus is None:
+        return 128 + child.signalstatus
+    else:
+        return child.exitstatus
 
 
 def main():
