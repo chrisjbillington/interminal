@@ -28,6 +28,8 @@ or to install from source:
 $ sudo python3 setup.py install
 ```
 
+`interminal` can also be installed with Python 2.
+
 ## Introduction
 
 `interminal` is mostly useful for things like making an external tool for your
