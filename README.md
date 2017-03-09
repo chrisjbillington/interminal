@@ -28,7 +28,8 @@ or to install from source:
 $ sudo python3 setup.py install
 ```
 
-`interminal` can also be installed with Python 2.
+`interminal` requires the `pexpect` package, which pip should automatically
+install if it is not already installed.
 
 ## Introduction
 
