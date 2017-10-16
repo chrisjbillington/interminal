@@ -8,8 +8,8 @@ desktop = os.environ.get('XDG_CURRENT_DESKTOP')
 if desktop is not None:
     desktop = desktop.lower()
 
-if desktop in ['gnome', 'unity', 'unity:unity7']:
-    TERMINAL = ['gnome-terminal', '-x']
+if desktop in ['gnome', 'unity', 'unity:unity7', 'ubuntu:gnome']:
+    TERMINAL = ['gnome-terminal', '--']
 elif desktop == 'kde':
     TERMINAL = ['konsole', '-e']
 elif desktop == 'xfce':
