@@ -1,7 +1,7 @@
 from distutils.core import setup
 import sys
 
-VERSION = '0.3.6'
+VERSION = '0.3.7'
 
 setup(name='interminal',
       version=VERSION,

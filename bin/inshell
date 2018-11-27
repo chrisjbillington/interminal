@@ -87,7 +87,6 @@ def run_command(command):
 
     # Start the shell process:
     child = pexpect.spawn(os.getenv('SHELL'))
-    child.delaybeforesend = 0
 
     # Connect SIGWINCH:
     signal.signal(signal.SIGWINCH, sigwinch_passthrough)
